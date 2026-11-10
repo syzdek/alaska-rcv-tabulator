@@ -3,7 +3,6 @@
 use strict;
 use warnings;
 use JSON;
-use JSON::Parse qw(read_json);
 use Data::Dumper;
 
 
@@ -136,6 +135,8 @@ if (!(opendir(DIR, $cvr_dir)))
 };
 while (readdir(DIR))
 {  $file = $_;
+
+   # skip the metadata files
    next if ($file !~ /CvrExport_[\d]+\.json$/i);
    if ($file =~ /^([-.\/\w]+)$/)
    {   $file = $cvr_dir . '/' . $file;
@@ -143,6 +144,8 @@ while (readdir(DIR))
    {  printf STDERR ("unknown filename %s/%s\n", $cvr_dir, $file);
       exit(1);
    };
+
+   # read file into memory and parse JSON
    if (!(open( FILE, '<', $file )))
    {  printf STDERR ("unable to read %s\n", $file);
       closedir(DIR);
@@ -150,24 +153,24 @@ while (readdir(DIR))
    };
    $tmp = decode_json(<FILE>);
    close(FILE);
+
+   # loop through records
    foreach $sess (@{$tmp->{'Sessions'}})
    {  foreach $contest (@{$sess->{'Original'}->{'Cards'}->[0]->{'Contests'}})
       {  next if ($contest->{'Id'} ne $id);
          @rank = ( 0, 0, 0, 0, 0, 0, 0 );
          foreach $mark (@{$contest->{'Marks'}})
-         { if (($rank[$mark->{'Rank'}]))
+         { # skip marks that ranked two candidates the same
+           if (($rank[$mark->{'Rank'}]))
            {  $rank[$mark->{'Rank'}] = -1;
               next;
            };
-#next if (($rank[$mark->{'Rank'}]));
            $rank[$mark->{'Rank'}] = $mark->{'CandidateId'};
          };
          $rec              = {};
          $rec->{'marks'}   = [ $rank[1], $rank[2], $rank[3], $rank[4], $rank[5], $rank[6] ];
          $rec->{'counted'} = {};
          $recs->[@{$recs}] = $rec;
-         #$recs->[@{$recs}] = [ $rank[1], $rank[2], $rank[3], $rank[4], $rank[5], $rank[6] ];
-         #printf("%s,%s,%s,%s,%s,%s\n", $rank[1], $rank[2], $rank[3], $rank[4], $rank[5], $rank[6]);
       };
    };
 };
