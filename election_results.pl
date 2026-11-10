@@ -34,47 +34,36 @@ my $perc;
 my @rank;
 
 
-if ( (@ARGV < 3) || (@ARGV > 4) )
-{  printf STDERR ("Usage: election_results.pl <ContestManifest.json> <CandidateManifest.json> <CvrExport> [ <ContestId> ]\n\n");
+if ( (@ARGV < 1) || (@ARGV > 2) )
+{  printf STDERR ("Usage: election_results.pl <CvrExport Directory> [ <ContestId> ]\n\n");
    exit(1);
 }
 
 
-# check argument syntax (path to ContestManifest.json)
-if ($ARGV[0] =~ /^([-.\/\w]+)$/)
-{   $contest_file = $1;
-} else
-{  printf STDERR ("invalid characters in ContestManifest filename\n");
-   exit(1);
-};
-if (!(-f $contest_file))
-{  printf STDERR ("unable to open ContestManifest file\n");
-   exit(1);
-};
-
-
-# check argument syntax (path to CandidateManifest.json)
-if ($ARGV[1] =~ /^([-.\/\w]+)$/)
-{   $condidate_file = $1;
-} else
-{  printf STDERR ("invalid characters in CandidateManifest filename\n");
-   exit(1);
-};
-if (!(-f $condidate_file))
-{  printf STDERR ("unable to open CandidateManifest file\n");
-   exit(1);
-};
-
-
 # check argument syntax (path to directory containing CvrExport files)
-if ($ARGV[2] =~ /^([-.\/\w]+)$/)
+if ($ARGV[0] =~ /^([-.\/\w]+)$/)
 {   $cvr_dir = $1;
 } else
 {  printf STDERR ("invalid characters in CvrExport directory name\n");
    exit(1);
 };
+
+
+$contest_file   = $cvr_dir . '/ContestManifest.json';
+$condidate_file = $cvr_dir . '/CandidateManifest.json';
+
+
+# verify that directory and key files exist
 if (!(-d $cvr_dir))
-{  printf STDERR ("unable to open cvr_dir directory\n");
+{  printf STDERR ("unable to find CvrExport directory\n");
+   exit(1);
+};
+if (!(-f $contest_file))
+{  printf STDERR ("unable to find ContestManifest.json file\n");
+   exit(1);
+};
+if (!(-f $condidate_file))
+{  printf STDERR ("unable to find CandidateManifest.json file\n");
    exit(1);
 };
 
@@ -110,7 +99,7 @@ foreach $rec (@{$tmp->{'List'}})
 
 
 # prints list of contests, if contests were not specified
-if (@ARGV < 4)
+if (@ARGV < 2)
 {  foreach $key (sort({$a <=> $b} keys(%{$contests})))
    {  printf(" %4i  %s\n", $key, $contests->{$key}->{'desc'});
       foreach $rec (sort({$a <=> $b} keys(%{$contests->{$key}->{'options'}})))
@@ -120,7 +109,7 @@ if (@ARGV < 4)
    };
    exit(0);
 };
-$id = $ARGV[3];
+$id = $ARGV[1];
 
 
 $recs    = [];
