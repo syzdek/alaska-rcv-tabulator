@@ -14,6 +14,7 @@ my $contest_file;
 my $condidate_file;
 my $cvr_dir;
 my $file;
+my $str;
 my $tmp;
 my $contests;
 my $rec;
@@ -105,9 +106,10 @@ foreach $rec (@{$tmp->{'List'}})
 # prints list of contests, if contests were not specified
 if (@ARGV < 2)
 {  foreach $key (sort({$a <=> $b} keys(%{$contests})))
-   {  printf(" %4i  %s\n", $key, $contests->{$key}->{'desc'});
+   {  $str = sprintf("Contest %i:", $key);
+      printf("%-13s %s\n", $str, $contests->{$key}->{'desc'});
       foreach $rec (sort({$a <=> $b} keys(%{$contests->{$key}->{'options'}})))
-      {  printf(" %4s %4i  %s\n", '', $rec, $contests->{$key}->{'options'}->{$rec}->{'desc'});
+      {  printf("              %s\n", $contests->{$key}->{'options'}->{$rec}->{'desc'});
       };
       printf("\n");
    };
