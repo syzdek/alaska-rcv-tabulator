@@ -172,6 +172,8 @@ closedir(DIR);
 
 
 printf("%s\n", $contests->{$id}->{'desc'});
+print "-" x length($contests->{$id}->{'desc'});
+printf("\n");
 $winner = 0;
 for($round = 1; ( ($round < $contests->{$id}->{'ranks'}) && (!($winner)) ); $round++)
 {
@@ -185,13 +187,13 @@ for($round = 1; ( ($round < $contests->{$id}->{'ranks'}) && (!($winner)) ); $rou
       $total++;
       $options->{$marks->[0]}->{'count'}++;
    };
-   printf("Round %i:\n", $round);
+   printf("   Round %i:\n", $round);
    $lcandidate = 0;
    $lcount     = 0;
    foreach $key (sort(keys(%{$options})))
    {  $perc   = ($options->{$key}->{'count'} / $total) * 100;
       $winner = 1 if ($perc > 50.00);
-      printf("   %8s  %6.2f%%  %s\n", $options->{$key}->{'count'}, $perc, $options->{$key}->{'desc'});
+      printf("      %8s  %6.2f%%  %s\n", $options->{$key}->{'count'}, $perc, $options->{$key}->{'desc'});
       if ($lcandidate == 0)
       {  $lcandidate = $key;
          $lcount     = $options->{$key}->{'count'};
