@@ -117,7 +117,6 @@ $options = $contests->{$id}->{'options'};
 
 
 # open directory
-printf("processing records ...\n");
 if (!(opendir(DIR, $cvr_dir)))
 {  printf STDERR ("unable to read CvrExport file\n");
    exit(1);
@@ -166,7 +165,6 @@ while (readdir(DIR))
 closedir(DIR);
 
 
-printf("\n\n");
 printf("%s\n", $contests->{$id}->{'desc'});
 for($round = 1; ($round < 5); $round++)
 {
@@ -197,7 +195,7 @@ for($round = 1; ($round < 5); $round++)
       $options->{$key}->{'count'} = 0;
    };
    delete($options->{$lcandidate});
-   printf("\n\n");
+   printf("\n");
 };
 
 
