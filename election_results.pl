@@ -31,6 +31,7 @@ my $lcount;
 my $round;
 my $total;
 my $perc;
+my $winner;
 my @rank;
 
 
@@ -81,6 +82,9 @@ foreach $rec (@{$tmp->{'List'}})
     $contests->{$rec->{'Id'}}->{'id'}      = $rec->{'Id'};
     $contests->{$rec->{'Id'}}->{'options'} = {};
     $contests->{$rec->{'Id'}}->{'desc'}    = $rec->{'Description'};
+    $contests->{$rec->{'Id'}}->{'ranks'}   = (($rec->{'NumOfRanks'}))
+                                           ? $rec->{'NumOfRanks'}
+                                           : 1;;
 };
 
 
@@ -166,7 +170,8 @@ closedir(DIR);
 
 
 printf("%s\n", $contests->{$id}->{'desc'});
-for($round = 1; ($round < 5); $round++)
+$winner = 0;
+for($round = 1; ( ($round < $contests->{$id}->{'ranks'}) && (!($winner)) ); $round++)
 {
    $total = 0;
    foreach $rec (@{$recs})
@@ -182,7 +187,8 @@ for($round = 1; ($round < 5); $round++)
    $lcandidate = 0;
    $lcount     = 0;
    foreach $key (sort(keys(%{$options})))
-   {  $perc = ($options->{$key}->{'count'} / $total) * 100;
+   {  $perc   = ($options->{$key}->{'count'} / $total) * 100;
+      $winner = 1 if ($perc > 50.00);
       printf("   %8s  %6.2f%%  %s\n", $options->{$key}->{'count'}, $perc, $options->{$key}->{'desc'});
       if ($lcandidate == 0)
       {  $lcandidate = $key;
