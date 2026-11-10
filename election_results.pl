@@ -116,6 +116,10 @@ if (@ARGV < 2)
    exit(0);
 };
 $id = $ARGV[1];
+if (!(defined($contests->{$id}->{'options'})))
+{  printf STDERR ("unknown contest id\n");
+   exit(1);
+};
 
 
 $recs    = [];
