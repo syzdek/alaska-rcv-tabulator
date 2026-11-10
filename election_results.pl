@@ -33,6 +33,7 @@ my $round;
 my $total;
 my $perc;
 my $winner;
+my $contest_recs;
 my @rank;
 
 
@@ -122,8 +123,8 @@ if (!(defined($contests->{$id}->{'options'})))
 };
 
 
-$recs    = [];
-$options = $contests->{$id}->{'options'};
+$contest_recs        = {};
+$contest_recs->{$id} = [];
 
 
 # open directory
@@ -168,7 +169,7 @@ while (readdir(DIR))
          $rec              = {};
          $rec->{'marks'}   = [ $rank[1], $rank[2], $rank[3], $rank[4], $rank[5], $rank[6] ];
          $rec->{'counted'} = {};
-         $recs->[@{$recs}] = $rec;
+         $contest_recs->{$id}->[@{$contest_recs->{$id}}] = $rec;
       };
    };
 };
@@ -178,7 +179,9 @@ closedir(DIR);
 printf("%s\n", $contests->{$id}->{'desc'});
 print "-" x length($contests->{$id}->{'desc'});
 printf("\n");
-$winner = 0;
+$winner   = 0;
+$recs     = $contest_recs->{$id};
+$options  = $contests->{$id}->{'options'};
 for($round = 1; ( ($round < $contests->{$id}->{'ranks'}) && (!($winner)) ); $round++)
 {
    $total = 0;
