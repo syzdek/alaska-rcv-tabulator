@@ -30,15 +30,20 @@ my $options;
 my $lcandidate;
 my $lcount;
 my $round;
+my $rounds;
 my $total;
 my $perc;
 my $winner;
 my $contest_recs;
 my @rank;
+my @ids;
 
 
 if ( (@ARGV < 1) || (@ARGV > 2) )
-{  printf STDERR ("Usage: election_results.pl <CvrExport Directory> [ <ContestId> ]\n\n");
+{  printf STDERR ("Usage: election_results.pl <CvrExport Directory>\n");
+   printf STDERR ("       election_results.pl <CvrExport Directory> all\n");
+   printf STDERR ("       election_results.pl <CvrExport Directory> <ContestId>\n");
+   printf STDERR ("\n");
    exit(1);
 }
 
@@ -80,7 +85,8 @@ $tmp = decode_json(<FILE>);
 close(FILE);
 $contests = {};
 foreach $rec (@{$tmp->{'List'}})
-{   $contests->{$rec->{'Id'}}              = {};
+{   $ids[@ids]                             = $rec->{'Id'};
+    $contests->{$rec->{'Id'}}              = {};
     $contests->{$rec->{'Id'}}->{'id'}      = $rec->{'Id'};
     $contests->{$rec->{'Id'}}->{'options'} = {};
     $contests->{$rec->{'Id'}}->{'desc'}    = $rec->{'Description'};
@@ -117,14 +123,15 @@ if (@ARGV < 2)
    exit(0);
 };
 $id = $ARGV[1];
-if (!(defined($contests->{$id}->{'options'})))
+if ( (!(defined($contests->{$id}->{'options'}))) && ($id ne 'all') )
 {  printf STDERR ("unknown contest id\n");
    exit(1);
 };
 
 
 $contest_recs        = {};
-$contest_recs->{$id} = [];
+$contest_recs->{$_}  = [] foreach (@ids);
+@ids                 = ( $id ) if ($id ne 'all');
 
 
 # open directory
@@ -156,7 +163,7 @@ while (readdir(DIR))
    # loop through records
    foreach $sess (@{$tmp->{'Sessions'}})
    {  foreach $contest (@{$sess->{'Original'}->{'Cards'}->[0]->{'Contests'}})
-      {  next if ($contest->{'Id'} ne $id);
+      {  next if ( ($contest->{'Id'} ne $id) && ($id ne 'all') );
          @rank = ( 0, 0, 0, 0, 0, 0, 0 );
          foreach $mark (@{$contest->{'Marks'}})
          { # skip marks that ranked two candidates the same
@@ -169,50 +176,61 @@ while (readdir(DIR))
          $rec              = {};
          $rec->{'marks'}   = [ $rank[1], $rank[2], $rank[3], $rank[4], $rank[5], $rank[6] ];
          $rec->{'counted'} = {};
-         $contest_recs->{$id}->[@{$contest_recs->{$id}}] = $rec;
+         $contest_recs->{$contest->{'Id'}}->[@{$contest_recs->{$contest->{'Id'}}}] = $rec;
       };
    };
 };
 closedir(DIR);
 
-
-printf("%s\n", $contests->{$id}->{'desc'});
-print "-" x length($contests->{$id}->{'desc'});
-printf("\n");
-$winner   = 0;
-$recs     = $contest_recs->{$id};
-$options  = $contests->{$id}->{'options'};
-for($round = 1; ( ($round < $contests->{$id}->{'ranks'}) && (!($winner)) ); $round++)
+foreach $id (sort({$a <=> $b} @ids))
 {
-   $total = 0;
-   foreach $rec (@{$recs})
-   {  $marks = $rec->{'marks'};
-      while ( (@{$marks} > 0) && (!(defined($options->{$marks->[0]}))) )
-      { shift @{$marks};
-      };
-      next if (@{$marks} == 0);
-      $total++;
-      $options->{$marks->[0]}->{'count'}++;
-   };
-   printf("   Round %i:\n", $round);
-   $lcandidate = 0;
-   $lcount     = 0;
-   foreach $key (sort(keys(%{$options})))
-   {  $perc   = ($options->{$key}->{'count'} / $total) * 100;
-      $winner = 1 if ($perc > 50.00);
-      printf("      %8s  %6.2f%%  %s\n", $options->{$key}->{'count'}, $perc, $options->{$key}->{'desc'});
-      if ($lcandidate == 0)
-      {  $lcandidate = $key;
-         $lcount     = $options->{$key}->{'count'};
-      };
-      if ($lcount > $options->{$key}->{'count'})
-      {  $lcandidate = $key;
-         $lcount     = $options->{$key}->{'count'};
-      };
-      $options->{$key}->{'count'} = 0;
-   };
-   delete($options->{$lcandidate});
+   printf("%s\n", $contests->{$id}->{'desc'});
+   print "-" x length($contests->{$id}->{'desc'});
    printf("\n");
+   $winner   = 0;
+   $recs     = $contest_recs->{$id};
+   $options  = $contests->{$id}->{'options'};
+   $rounds   = ($contests->{$id}->{'ranks'} > 0)
+             ? $contests->{$id}->{'ranks'} + 1
+             : 2;
+   for($round = 1; ( ($round < $rounds) && (!($winner)) ); $round++)
+   {
+      $total      = 0;
+      $lcandidate = 0;
+      $lcount     = 0;
+
+      foreach $rec (@{$recs})
+      {  $marks = $rec->{'marks'};
+         while ( (@{$marks} > 0) && (!(defined($options->{$marks->[0]}))) )
+         { shift @{$marks};
+         };
+         next if (@{$marks} == 0);
+         $total++;
+         $options->{$marks->[0]}->{'count'}++;
+      };
+
+      printf("   Round %i:\n", $round);
+      foreach $key (sort(keys(%{$options})))
+      {  $perc   = '0.00';
+         $perc   = ($options->{$key}->{'count'} / $total) * 100 if ($total > 0);
+         $winner = 1 if ($perc > 50.00);
+
+         printf("      %8s  %6.2f%%  %s\n", $options->{$key}->{'count'}, $perc, $options->{$key}->{'desc'});
+
+         if ($lcandidate == 0)
+         {  $lcandidate = $key;
+            $lcount     = $options->{$key}->{'count'};
+         };
+         if ($lcount > $options->{$key}->{'count'})
+         {  $lcandidate = $key;
+            $lcount     = $options->{$key}->{'count'};
+         };
+
+         $options->{$key}->{'count'} = 0;
+      };
+      delete($options->{$lcandidate}) if ((defined($options->{$lcandidate})));
+      printf("\n");
+   };
 };
 
 
