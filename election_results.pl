@@ -239,13 +239,13 @@ foreach $id (sort({$a <=> $b} @ids))
    printf("%s\n", $str);
    print "-" x length($str);
    printf("\n");
-   $winner   = 0;
+   $winner   = '';
    $recs     = $contest_recs->{$id};
    $options  = $contests->{$id}->{'options'};
    $rounds   = ($contests->{$id}->{'ranks'} > 0)
              ? $contests->{$id}->{'ranks'} + 1
              : 2;
-   for($round = 1; ( ($round < $rounds) && (!($winner)) ); $round++)
+   for($round = 1; ( ($round < $rounds) && ($winner eq '') ); $round++)
    {
       $total      = 0;
       $lcandidate = 0;
@@ -265,7 +265,7 @@ foreach $id (sort({$a <=> $b} @ids))
       foreach $key (sort(keys(%{$options})))
       {  $perc   = '0.00';
          $perc   = ($options->{$key}->{'count'} / $total) * 100 if ($total > 0);
-         $winner = 1 if ($perc > 50.00);
+         $winner = $options->{$key}->{'desc'} if ($perc > 50.00);
 
          printf("      %8s  %6.2f%%  %s\n", $options->{$key}->{'count'}, $perc, $options->{$key}->{'desc'});
 
@@ -283,6 +283,8 @@ foreach $id (sort({$a <=> $b} @ids))
       delete($options->{$lcandidate}) if ((defined($options->{$lcandidate})));
       printf("\n");
    };
+
+   printf("   Winner:               %s\n\n", $winner) if ($winner ne '');
 };
 
 
