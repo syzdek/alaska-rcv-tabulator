@@ -54,6 +54,7 @@ my $contest;
 my $key;
 my $entry;
 my $id;
+my $exhausted;
 my $mark;
 my $marks;
 my $options;
@@ -63,6 +64,7 @@ my $round;
 my $rounds;
 my $total;
 my $perc;
+my $rank;
 my $card;
 my $winner;
 my $contest_recs;
@@ -196,17 +198,31 @@ while (readdir(DIR))
    {  foreach $card (@{$sess->{'Original'}->{'Cards'}})
       {  foreach $contest (@{$card->{'Contests'}})
          {  next if ( ($contest->{'Id'} ne $id) && ($id ne 'all') );
-            @ranks = ( 0, 0, 0, 0, 0, 0, 0 );
+            @ranks = ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
             foreach $mark (@{$contest->{'Marks'}})
-            { # skip marks that ranked two candidates the same
+            { $mark->{'Rank'}--;
+
+              # skip marks that ranked two candidates the same
               if (($ranks[$mark->{'Rank'}]))
               {  $ranks[$mark->{'Rank'}] = -1;
                  next;
               };
+
+              # save rank
               $ranks[$mark->{'Rank'}] = $mark->{'CandidateId'};
             };
+
+            # check for more than 1 consecutive skipped ranks
+            $exhausted = 0;
+            for($rank = 0; ($rank < 9); $rank++)
+            {  $exhausted    = 1 if   ($ranks[$rank] == -1);
+               $exhausted    = 1 if ( ($ranks[$rank] ==  0) && ($ranks[$rank+1] < 1) );
+               $ranks[$rank] = 0 if (($exhausted));
+            };
+
+            # record entry
             $rec              = {};
-            $rec->{'marks'}   = [ $ranks[1], $ranks[2], $ranks[3], $ranks[4], $ranks[5], $ranks[6] ];
+            $rec->{'marks'}   = [ @ranks ];
             $rec->{'counted'} = {};
             $contest_recs->{$contest->{'Id'}}->[@{$contest_recs->{$contest->{'Id'}}}] = $rec;
          };
