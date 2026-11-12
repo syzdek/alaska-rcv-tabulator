@@ -63,6 +63,7 @@ my $round;
 my $rounds;
 my $total;
 my $perc;
+my $card;
 my $winner;
 my $contest_recs;
 my @ranks;
@@ -192,21 +193,23 @@ while (readdir(DIR))
 
    # loop through records
    foreach $sess (@{$tmp->{'Sessions'}})
-   {  foreach $contest (@{$sess->{'Original'}->{'Cards'}->[0]->{'Contests'}})
-      {  next if ( ($contest->{'Id'} ne $id) && ($id ne 'all') );
-         @ranks = ( 0, 0, 0, 0, 0, 0, 0 );
-         foreach $mark (@{$contest->{'Marks'}})
-         { # skip marks that ranked two candidates the same
-           if (($ranks[$mark->{'Rank'}]))
-           {  $ranks[$mark->{'Rank'}] = -1;
-              next;
-           };
-           $ranks[$mark->{'Rank'}] = $mark->{'CandidateId'};
+   {  foreach $card (@{$sess->{'Original'}->{'Cards'}})
+      {  foreach $contest (@{$card->{'Contests'}})
+         {  next if ( ($contest->{'Id'} ne $id) && ($id ne 'all') );
+            @ranks = ( 0, 0, 0, 0, 0, 0, 0 );
+            foreach $mark (@{$contest->{'Marks'}})
+            { # skip marks that ranked two candidates the same
+              if (($ranks[$mark->{'Rank'}]))
+              {  $ranks[$mark->{'Rank'}] = -1;
+                 next;
+              };
+              $ranks[$mark->{'Rank'}] = $mark->{'CandidateId'};
+            };
+            $rec              = {};
+            $rec->{'marks'}   = [ $ranks[1], $ranks[2], $ranks[3], $ranks[4], $ranks[5], $ranks[6] ];
+            $rec->{'counted'} = {};
+            $contest_recs->{$contest->{'Id'}}->[@{$contest_recs->{$contest->{'Id'}}}] = $rec;
          };
-         $rec              = {};
-         $rec->{'marks'}   = [ $ranks[1], $ranks[2], $ranks[3], $ranks[4], $ranks[5], $ranks[6] ];
-         $rec->{'counted'} = {};
-         $contest_recs->{$contest->{'Id'}}->[@{$contest_recs->{$contest->{'Id'}}}] = $rec;
       };
    };
 };
