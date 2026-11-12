@@ -42,11 +42,14 @@ $Data::Dumper::Sortkeys = 1;
 
 my $contest_file;
 my $condidate_file;
+my $party_file;
 my $cvr_dir;
 my $file;
 my $str;
+my $strlen;
 my $tmp;
 my $contests;
+my $parties;
 my $rec;
 my $recs;
 my $sess;
@@ -92,6 +95,7 @@ if ($ARGV[0] =~ /^([-.\/\w]+)$/)
 
 $contest_file   = $cvr_dir . '/ContestManifest.json';
 $condidate_file = $cvr_dir . '/CandidateManifest.json';
+$party_file     = $cvr_dir . '/PartyManifest.json';
 
 
 # verify that directory and key files exist
@@ -106,6 +110,22 @@ if (!(-f $contest_file))
 if (!(-f $condidate_file))
 {  printf STDERR ("unable to find CandidateManifest.json file\n");
    exit(1);
+};
+
+
+# parse PartyManifest
+if (!(open( FILE, '<', $party_file )))
+{  printf STDERR ("unable to read PartyManifest file\n");
+   exit(1);
+};
+$tmp = decode_json(<FILE>);
+close(FILE);
+$parties = {};
+foreach $rec (@{$tmp->{'List'}})
+{   $rec->{'Description'}                 =~ s/^Registered //g;
+    $parties->{$rec->{'Id'}}              = {};
+    $parties->{$rec->{'Id'}}->{'id'}      = $rec->{'Id'};
+    $parties->{$rec->{'Id'}}->{'desc'}    = $rec->{'Description'};
 };
 
 
@@ -138,9 +158,30 @@ if (!(open( FILE, '<', $condidate_file )))
 $tmp = decode_json(<FILE>);
 close(FILE);
 foreach $rec (@{$tmp->{'List'}})
-{  $contests->{$rec->{'ContestId'}}->{'options'}->{$rec->{'Id'}}            = {};
+{  $rec->{'Party'} = '';
+   if ( ((defined($rec->{'Affiliations'}->[0]))) && ((defined($parties->{$rec->{'Affiliations'}->[0]}))) )
+   {  $rec->{'Party'} = $parties->{$rec->{'Affiliations'}->[0]}->{'desc'};
+   };
+   $contests->{$rec->{'ContestId'}}->{'options'}->{$rec->{'Id'}}            = {};
    $contests->{$rec->{'ContestId'}}->{'options'}->{$rec->{'Id'}}->{'desc'}  = $rec->{'Description'};
+   $contests->{$rec->{'ContestId'}}->{'options'}->{$rec->{'Id'}}->{'party'} = $rec->{'Party'};
    $contests->{$rec->{'ContestId'}}->{'options'}->{$rec->{'Id'}}->{'count'} = 0;
+};
+
+
+# generates display names
+foreach $key (keys(%{$contests}))
+{  $strlen = 0;
+   foreach $rec (values(%{$contests->{$key}->{'options'}}))
+   {  $strlen = length($rec->{'desc'}) if ($strlen < length($rec->{'desc'}));
+   };
+   foreach $rec (values(%{$contests->{$key}->{'options'}}))
+   {  if ($rec->{'party'} eq '')
+      {  $rec->{'display'} = $rec->{'desc'};
+      } else
+      {  $rec->{'display'} = sprintf("%-*s  (%s)", $strlen, $rec->{'desc'}, $rec->{'party'});
+      };
+   };
 };
 
 
@@ -265,9 +306,9 @@ foreach $id (sort({$a <=> $b} @ids))
       foreach $key (sort(keys(%{$options})))
       {  $perc   = '0.00';
          $perc   = ($options->{$key}->{'count'} / $total) * 100 if ($total > 0);
-         $winner = $options->{$key}->{'desc'} if ($perc > 50.00);
+         $winner = $options->{$key}->{'display'} if ($perc > 50.00);
 
-         printf("      %8s  %6.2f%%  %s\n", $options->{$key}->{'count'}, $perc, $options->{$key}->{'desc'});
+         printf("      %8s  %6.2f%%  %s\n", $options->{$key}->{'count'}, $perc, $options->{$key}->{'display'});
 
          if ($lcandidate == 0)
          {  $lcandidate = $key;
