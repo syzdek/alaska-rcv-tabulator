@@ -326,6 +326,7 @@ foreach $id (sort({$a <=> $b} @ids))
    };
 
    printf("   Winner:               %s\n\n", $winner) if ($winner ne '');
+   printf("\n");
 };
 
 
