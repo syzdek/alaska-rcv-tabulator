@@ -42,7 +42,7 @@ from the Alaska Division of Elections on @CVR_DATE_SHORT@.  The SHA-512 hashes
 of the files used to generate these results are included at the end of this
 file.
 
-These results are not the official results of the Alaska electtion and these
+These results are not the official results of the Alaska election and these
 results do not account for the hand counted ballots or the write-in entries.
 
 
