@@ -123,6 +123,7 @@ foreach $rec (@{$tmp->{'List'}})
     $contests->{$rec->{'Id'}}->{'id'}      = $rec->{'Id'};
     $contests->{$rec->{'Id'}}->{'options'} = {};
     $contests->{$rec->{'Id'}}->{'desc'}    = $rec->{'Description'};
+    $contests->{$rec->{'Id'}}->{'ballots'} = 0;
     $contests->{$rec->{'Id'}}->{'ranks'}   = (($rec->{'NumOfRanks'}))
                                            ? $rec->{'NumOfRanks'}
                                            : 1;;
@@ -225,6 +226,7 @@ while (readdir(DIR))
             $rec->{'marks'}   = [ @ranks ];
             $rec->{'counted'} = {};
             $contest_recs->{$contest->{'Id'}}->[@{$contest_recs->{$contest->{'Id'}}}] = $rec;
+            $contests->{$contest->{'Id'}}->{'ballots'}++;
          };
       };
    };
@@ -233,8 +235,9 @@ closedir(DIR);
 
 foreach $id (sort({$a <=> $b} @ids))
 {
-   printf("%s\n", $contests->{$id}->{'desc'});
-   print "-" x length($contests->{$id}->{'desc'});
+   $str = sprintf("%s (%i ballots)", $contests->{$id}->{'desc'}, $contests->{$id}->{'ballots'});
+   printf("%s\n", $str);
+   print "-" x length($str);
    printf("\n");
    $winner   = 0;
    $recs     = $contest_recs->{$id};
